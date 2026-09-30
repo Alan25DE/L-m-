@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMO - Prototipo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #FAFAFA;
+        }
+
+        /* Estilo sutil de bordes estilo boceto/cuaderno pero moderno */
+        .sketch-box {
+            border: 3px solid #2D3748;
+            border-radius: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .sketch-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 0 #2D3748;
+        }
+
+        .sketch-box:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 0 #2D3748;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-gray-800 bg-gray-50 p-4 md:p-8">
+
+    <header class="w-full max-w-5xl mx-auto mb-12">
+        <div class="flex items-center justify-between gap-4 py-2">
+            
+            <!-- 1. Izquierda: LOGO LUMO (Fiel al texto del dibujo) -->
+            <div class="flex items-center">
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide text-gray-900 select-none">
+                    LÜMO
+                </h1>
+            </div>
+
+            <!-- 2. Centro: BARRA DE BÚSQUEDA ALARGADA CON LUPA -->
+            <div class="flex-1 max-w-xl mx-4">
+                <div class="relative flex items-center">
+                    <input type="text" 
+                           id="searchInput" 
+                           oninput="handleSearch()"
+                           placeholder="Buscar..." 
+                           class="w-full py-2.5 pl-6 pr-12 text-xl font-medium rounded-full border-3 border-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-800 text-gray-800 placeholder-gray-400">
+                    
+                    <button onclick="executeSearch()" 
+                            class="absolute right-3 text-gray-800 hover:text-gray-600 p-1 flex items-center justify-center transition-transform active:scale-90"
+                            aria-label="Buscar">
+                        <i class="fas fa-search text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Derecha: ICONO DE USUARIO / PERFIL -->
+            <div class="flex items-center">
+                <button onclick="showUserPrompt()" 
+                        class="w-12 h-12 md:w-14 md:h-14 rounded-full border-3 border-gray-800 bg-white flex flex-col items-center justify-center text-gray-800 hover:bg-gray-100 transition-colors shadow-sm"
+                        title="Perfil de Usuario">
+                    <i class="fas fa-user text-xl md:text-2xl"></i>
+                    <span class="text-[10px] font-bold leading-none mt-0.5">User</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center my-auto">
+        
+        <!-- GRID DE LAS 3 CAJAS FIEL AL BOCETO (1, 2, 3) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl px-4" id="cardsGrid">
+
+            <!-- CAJA 1 -->
+            <button onclick="selectOption(1)" 
+                    data-card="1"
+                    class="sketch-box bg-white p-8 aspect-square flex flex-col items-center justify-center group cursor-pointer shadow-sm">
+                <span class="text-8xl md:text-9xl font-bold text-gray-800 group-hover:scale-105 transition-transform select-none">
+                    1
+                </span>
+            </button>
+
+            <!-- CAJA 2 -->
+            <button onclick="selectOption(2)" 
+                    data-card="2"
+                    class="sketch-box bg-white p-8 aspect-square flex flex-col items-center justify-center group cursor-pointer shadow-sm">
+                <span class="text-8xl md:text-9xl font-bold text-gray-800 group-hover:scale-105 transition-transform select-none">
+                    2
+                </span>
+            </button>
+
+            <!-- CAJA 3 -->
+            <button onclick="selectOption(3)" 
+                    data-card="3"
+                    class="sketch-box bg-white p-8 aspect-square flex flex-col items-center justify-center group cursor-pointer shadow-sm">
+                <span class="text-8xl md:text-9xl font-bold text-gray-800 group-hover:scale-105 transition-transform select-none">
+                    3
+                </span>
+            </button>
+
+        </div>
+
+        <!-- Mensaje de estado sencillo de interacción -->
+        <div id="statusMessage" class="mt-12 text-center h-8">
+            <p class="text-xl font-medium text-gray-600" id="statusText">Selecciona una opción (1, 2 o 3)</p>
+        </div>
+
+    </main>
+
+    <footer class="w-full text-center py-4 text-gray-400 font-medium text-sm">
+        <p>LUMO - Proyecto de Grado</p>
+    </footer>
+
+    <script>
+        // Función limpia para sonido de clic sin sobrecargar
+        function playSimpleClick() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        // Selección de las opciones 1, 2 o 3
+        function selectOption(number) {
+            playSimpleClick();
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = `Has seleccionado la actividad ${number}`;
+            statusText.className = "text-xl font-bold text-gray-800 transition-all";
+            
+            // Efecto visual temporal en la tarjeta seleccionada
+            const cards = document.querySelectorAll('[data-card]');
+            cards.forEach(card => {
+                if (card.getAttribute('data-card') == number) {
+                    card.classList.add('bg-amber-50');
+                } else {
+                    card.classList.remove('bg-amber-50');
+                }
+            });
+        }
+
+        // Búsqueda simple
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const statusText = document.getElementById('statusText');
+            
+            if (query === "") {
+                statusText.textContent = "Selecciona una opción (1, 2 o 3)";
+                statusText.className = "text-xl font-medium text-gray-600";
+            } else {
+                statusText.textContent = `Buscando: "${query}"...`;
+                statusText.className = "text-xl font-medium text-gray-700";
+            }
+        }
+
+        function executeSearch() {
+            playSimpleClick();
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                const statusText = document.getElementById('statusText');
+                statusText.textContent = `Búsqueda ejecutada para: "${query}"`;
+            }
+        }
+
+        function showUserPrompt() {
+            playSimpleClick();
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = "Perfil de Usuario";
+            statusText.className = "text-xl font-bold text-gray-800";
+        }
+    </script>
+</body>
+</html>
